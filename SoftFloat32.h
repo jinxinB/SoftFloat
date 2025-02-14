@@ -1,4 +1,6 @@
-#pragma once
+
+#ifndef __SoftFloat32_h__
+#define __SoftFloat32_h__
 
 // 32位系统 软件浮点功能
 #ifdef _MSC_VER 
@@ -43,15 +45,17 @@ protected:
 	
 	static const unsigned int g_ModMaxLoop = 237*2; // 模运算最大循环数量，通常超过底数位后，因底数截断将导致实际值与结果有较大误差，此处仅预留1倍余量
 
-	static void GetValInf(const SF32_BaseTypeU Data[8] , SF32_BaseTypeU& uSignBit , SF32_BaseTypeU& uExp , SF32_BaseTypeU* pBase);
-	static void SetValInf(SF32_BaseTypeU Data[8] , const SF32_BaseTypeU uSignBit , const SF32_BaseTypeU uExp , const SF32_BaseTypeU* pBase);
+	static void GetValInf(const SF32_BaseTypeU Data[8] , SF32_BaseTypeU& uSignBit , SF32_BaseTypeU& exp , SF32_BaseTypeU base[8]);
+	static void SetValInf(SF32_BaseTypeU Data[8] , const SF32_BaseTypeU uSignBit , const SF32_BaseTypeU exp , const SF32_BaseTypeU base[8]);
 	static void Add(SF32_BaseTypeU Data1_Sum[8] , const SF32_BaseTypeU Data2[8]);
 	static signed int ThreeWayComp(const SF32_BaseTypeU Data1[8] , const SF32_BaseTypeU Data2[8]);
 	static bool IsNAN_S(const SF32_BaseTypeU Data[8]);
 	static bool IsInfinities_S(const SF32_BaseTypeU Data[8]);
 	static bool IsNumber_S(const SF32_BaseTypeU Data[8]);
+	static bool IsZero_S(const SF32_BaseTypeU Data[8]);
 	static void SetNAN_S(SF32_BaseTypeU Data[8] , SF32_BaseTypeU uSignBit = 0);
 	static void SetInfinities_S(SF32_BaseTypeU Data[8] , SF32_BaseTypeU uSignBit = 0);
+	static void SetZero_S(SF32_BaseTypeU Data[8] , SF32_BaseTypeU uSignBit = 0);
 	static void ToInt64(const SF32_BaseTypeU Data[8] , SF32_UInt64_T& uData , SF32_BaseTypeU& uSignBite);
 	static void FromInt64(SF32_BaseTypeU Data[8] , const SF32_UInt64_T uData , const SF32_BaseTypeU uSignBite);
 	
@@ -76,11 +80,20 @@ public:
 	bool IsNAN() const;
 	bool IsInfinities() const;
 	bool IsNumber() const;
+	bool IsZero() const;
+	bool IsNeg() const;
+	bool IsPos() const;
 	void SetNAN(SF32_BaseTypeU uSignBit = 0);
 	void SetInfinities(SF32_BaseTypeU uSignBit = 0);
+	void SetZero(SF32_BaseTypeU uSignBit = 0);
 	void ABS();
 	void Neg();
 	void Sqrt();
+	void PowInt(SF32_BaseTypeS iExp);
+	void ScalBN(SF32_BaseTypeS iNum);
+	// 字符串 0B\0b起始二进制e 0\0O\0o起始8进制e 无前缀十进制e 0X\0x起始十六进制p
+	SF32_BaseTypeS FormStr(const char* pStr , SF32_BaseTypeS nLen = -1 , SF32_BaseTypeS nBase = 0);
+	SF32_BaseTypeS ToStr(char* pReStr , SF32_BaseTypeS nSize , SF32_BaseTypeS nBase = 10);
 	
 	CSoftFloat256& operator += (const CSoftFloat256& b);
 	CSoftFloat256& operator -= (const CSoftFloat256& b);
@@ -110,3 +123,5 @@ public:
 	operator SF32_UInt32_T() const;
 	operator SF32_UInt64_T() const;
 };
+
+#endif
