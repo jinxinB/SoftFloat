@@ -222,12 +222,29 @@ void OutptuBase2Text(const char* pStr)
 {
 	mpf_t v;
 	mp_exp_t exp;
-	char strBuf[256];
+	char strBuf[512];
 	mpf_init(v);
 	mpf_set_prec(v, 256);
 	mpf_set_str(v, pStr, 10);
 	mpf_get_str(strBuf , &exp, 2, sizeof(strBuf)-1 , v);
 	std::cout << "0." << strBuf << "e" << exp << std::endl;
+	mpf_clear(v);
+}
+void OutptuBase2_ExpText(signed long int exp)
+{
+	mpf_t v;
+	mpf_init(v);
+	mpf_set_prec(v, 256);
+	mpf_set_ui(v, 1);
+	if( exp < 0 )
+	{
+		mpf_div_2exp(v, v, (unsigned long)(-exp));
+	}
+	else
+	{
+		mpf_mul_2exp(v, v, (unsigned long)exp);
+	}
+	mpf_dump(v);
 	mpf_clear(v);
 }
 
@@ -260,11 +277,34 @@ int main()
 	TestOp2i("3.1415926535897932384626433832795", 999, OpScalBN);
 	TestOp2i("3.1415926535897932384626433832795", -888, OpPowrI);
 	TestOp2i("3.1415926535897932384626433832795", -888, OpScalBN);
-	std::cout << "OP test end" << std::endl;
+	std::cout << "OP test end\r\n\r\n";
 
 	TestPerformance();
-	std::cout << "Performance test end" << std::endl;
-	
+	std::cout << "Performance test end\r\n\r\n";
+
+	std::cout << "2 ^ -262154 : " << std::endl;
+	v1.SetBN(-262154); // -0x0003FFFF - 11
+	strBuf[v1.ToStr(strBuf, sizeof(strBuf) - 1)] = 0;
+	std::cout << strBuf << std::endl;
+	OutptuBase2_ExpText(-262154);
+	//v2 = 2;
+	//v2.ScalBN(2154);
+	v2.SetBN(2154);
+	strBuf[v2.ToStr(strBuf, sizeof(strBuf) - 1)] = 0;
+	std::cout << "2 ^ 2154 : " << std::endl;
+	std::cout << strBuf << std::endl;
+	OutptuBase2_ExpText(2154);
+	v1 *= v2;
+	v2.SetBN(-260000);
+	std::cout << "2 ^ -260000 : " << std::endl;
+	strBuf[v1.ToStr(strBuf, sizeof(strBuf) - 1)] = 0;
+	std::cout << strBuf << std::endl;
+	strBuf[v2.ToStr(strBuf, sizeof(strBuf) - 1)] = 0;
+	std::cout << strBuf << std::endl;
+	OutptuBase2_ExpText(-260000);
+	std::cout << "SetBN test end\r\n\r\n";
+
+
 	v1.SetNAN();
 	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
 	std::cout << strBuf << std::endl;
@@ -273,13 +313,21 @@ int main()
 	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
 	std::cout << strBuf << std::endl;
 
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf) - 1, 2)] = 0;
-	std::cout << strBuf << std::endl;
-	OutptuBase2Text("0.6349923815708424697089005265198e303");
+	std::cout << "2 ^ -262167 : " << std::endl;
+	v1.FormStr("1e-262167", -1, 2);
+	v2.SetBN(-262167);
+	strBuf[v1.ToStr(strBuf, 32, 2)] = 0;
+	std::cout << "0b" << strBuf << std::endl;
+	strBuf[v2.ToStr(strBuf, 32, 2)] = 0;
+	std::cout << "0b" << strBuf << std::endl;
 
 	v1.FormStr("0.6349923815708424697089005265198e303");
 	strBuf[v1.ToStr(strBuf, 32, 10)] = 0;
 	std::cout << strBuf << std::endl;
+
+	strBuf[v1.ToStr(strBuf, sizeof(strBuf) - 1, 2)] = 0;
+	std::cout << strBuf << std::endl;
+	OutptuBase2Text("0.6349923815708424697089005265198e303");
 
 	v1.FormStr("0.6349923815708424697089005265198e303");
 	d1 = v1;
@@ -304,7 +352,7 @@ int main()
 	d1 = v1;
 	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 12)] = 0;
 	std::cout << strBuf << std::endl;
-	std::cout << "ToStr test end" << std::endl;
+	std::cout << "ToStr test end\r\n\r\n";
 
 	//v1.FormStr("1.2951585059776189e-318"); // 无四舍五入，最小值差一
 	//SoftFloat32_Check_DE(1.2951585059776189e-318, v1, 1);
@@ -320,7 +368,8 @@ int main()
 	v1.FormStr("0x1.6349923815708424p12"); // base(16)^exp
 	SoftFloat32_Check_DE(0x1.6349923815708424p48, v1, 4); // 2^exp
 
-	std::cout << "FormStr test end" << std::endl;
+	std::cout << "FormStr test end\r\n\r\n";
+	
 	
 	v1 = 0.256;
 	v1.PowInt(123);
@@ -332,7 +381,7 @@ int main()
 	//SoftFloat32_Check_DE(6.116236450222695245349450840302e+72 , v1, 2);
 	SoftFloat32_Check_DE(pow(0.256, -123), v1, 2);
 
-	std::cout << "PowInt test end" << std::endl;
+	std::cout << "PowInt test end\r\n\r\n";
 	
 	//std::cout << (double)v1 << std::endl;
 	system("pause");

@@ -86,6 +86,7 @@ public:
 	void SetNAN(SF32_BaseTypeU uSignBit = 0);
 	void SetInfinities(SF32_BaseTypeU uSignBit = 0);
 	void SetZero(SF32_BaseTypeU uSignBit = 0);
+	void SetBN(SF32_BaseTypeS iNum , SF32_BaseTypeU uSignBit = 0);
 	void ABS();
 	void Neg();
 	void Sqrt();
