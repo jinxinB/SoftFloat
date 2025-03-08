@@ -67,8 +67,8 @@ public:
 	CSoftFloat256(const SF32_SInt64_T v);
 	CSoftFloat256(const SF32_UInt32_T v);
 	CSoftFloat256(const SF32_UInt64_T v);
-	CSoftFloat256(const char pv[32]);
-	CSoftFloat256(const unsigned char pv[32]);
+	CSoftFloat256(const char* pStr , SF32_BaseTypeS nLen = -1 , SF32_BaseTypeS nBase = 0);
+	CSoftFloat256(const SF32_BaseTypeU Data[8]);
 	~CSoftFloat256();
 #ifdef _MSC_VER 
 	CSoftFloat256(const unsigned long v);
@@ -92,9 +92,21 @@ public:
 	void Sqrt();
 	void PowInt(SF32_BaseTypeS iExp);
 	void ScalBN(SF32_BaseTypeS iNum);
-	// 字符串 0B\0b起始二进制e 0\0O\0o起始8进制e 无前缀十进制e 0X\0x起始十六进制p
+	// 字符串转换函数: 
+	// 根据文本设置当前值
+	// 指数固定按10进制识别
+	// 自动识别格式: 0B\0b起始为二进制(指数标识e) 0\0O\0o起始为8进制(e) 无前缀为十进制(e) 0X\0x起始为十六进制(p)
 	SF32_BaseTypeS FormStr(const char* pStr , SF32_BaseTypeS nLen = -1 , SF32_BaseTypeS nBase = 0);
-	SF32_BaseTypeS ToStr(char* pReStr , SF32_BaseTypeS nSize , SF32_BaseTypeS nBase = 10);
+	// 获取当前数据转换文本信息
+	// 返回文本长度，文本为逆序，结果为：整数文本值 * 底数 ^ 指数
+	// 示例: data=11 , nBase=10 : return=5 strReBase="00011" iReExp=-3
+	SF32_BaseTypeS GetStrInf(SF32_BaseTypeS nBase , char* strReBase , SF32_BaseTypeS nBaseSize , SF32_BaseTypeS& iReExp) const;
+	// 当前数据转换文本
+	// 固定以小数起始，指数固定为10进制，结果=小数*底数^指数，没有自动截断低位功能
+	SF32_BaseTypeS ToStr(char* pReStr , SF32_BaseTypeS nSize , SF32_BaseTypeS nBase = 10) const;
+	// 原始数据操作
+	const SF32_BaseTypeU* GetRawData();
+	void SetRawData(const SF32_BaseTypeU Data[8]);
 	
 	CSoftFloat256& operator += (const CSoftFloat256& b);
 	CSoftFloat256& operator -= (const CSoftFloat256& b);
@@ -112,6 +124,7 @@ public:
 	CSoftFloat256& operator = (const SF32_SInt64_T v);
 	CSoftFloat256& operator = (const SF32_UInt32_T v);
 	CSoftFloat256& operator = (const SF32_UInt64_T v);
+	CSoftFloat256& operator = (const char* pStr);
 	bool operator == (const CSoftFloat256& b);
 	bool operator != (const CSoftFloat256& b);
 	bool operator >= (const CSoftFloat256& b);

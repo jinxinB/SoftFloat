@@ -516,13 +516,16 @@ CSoftFloat256& CSoftFloat256::operator = (const unsigned long v)
 	return *this = (SF32_UInt64_T)v;
 }
 #endif
-CSoftFloat256::CSoftFloat256(const char pv[32])
+CSoftFloat256::CSoftFloat256(const char* pStr , SF32_BaseTypeS nLen , SF32_BaseTypeS nBase)
 {
-	memcpy(m_Data , pv , sizeof(m_Data));
+	if( FormStr(pStr , nLen , nBase) < 0 )
+	{
+		SetNAN();
+	}
 }
-CSoftFloat256::CSoftFloat256(const unsigned char pv[32])
+CSoftFloat256::CSoftFloat256(const SF32_BaseTypeU Data[8])
 {
-	memcpy(m_Data , pv , sizeof(m_Data));
+	memcpy(m_Data , Data , sizeof(m_Data));
 }
 CSoftFloat256::~CSoftFloat256()
 {
@@ -985,6 +988,7 @@ SF32_BaseTypeS CSoftFloat256::FormStr(const char* pStr , SF32_BaseTypeS nLen , S
 			break;
 		}
 	}
+	// 自动识别进制类型
 	if( nBase <= 1 )
 	{
 		if( pStr[pos] == '0' )
@@ -1033,6 +1037,7 @@ CSoftFloat256_FormStr_DefaultBase:
 			}
 		}
 	}
+	// 获取底数及指数值
 	memset(base , 0 , sizeof(base));
 	dotPos = 0;
 	signExp = 0;
@@ -1082,6 +1087,14 @@ CSoftFloat256_FormStr_DefaultBase:
 			else if( CharVal == '$' )
 			{
 				CharVal = 63;
+			}
+			else if( CharVal == 0 || CharVal == '\r' || CharVal == '\n' )
+			{
+				break;
+			}
+			else if( CharVal == ',' || CharVal == '\'' || CharVal == ' ' || CharVal == '\t' )
+			{
+				continue;
 			}
 			else
 			{
@@ -1239,19 +1252,121 @@ CSoftFloat256_FormStr_DefaultBase:
 	*this *= TmpVal;
 	return (SF32_BaseTypeS)pos;
 }
-SF32_BaseTypeS CSoftFloat256::ToStr(char* pReStr, SF32_BaseTypeS nSize, SF32_BaseTypeS nBase)
+SF32_BaseTypeS CSoftFloat256::GetStrInf(SF32_BaseTypeS nBase , char* strReBase , SF32_BaseTypeS nBaseSize , SF32_BaseTypeS& iReExp) const
 {
 	char CharVal;
 	char CharCaseVal;
 	SF32_BaseTypeS iBaseCnt;
-	SF32_BaseTypeS iExpCnt;
 	SF32_BaseTypeS iExp;
 	SF32_BaseTypeS iNum;
 	SF32_BaseTypeU exp;
 	SF32_BaseTypeU signbit;
 	SF32_BaseTypeU base[8];
 	CSoftFloat256 TmpVal;
+	if( nBase < 0 )
+	{
+		nBase = -nBase;
+		CharCaseVal = 'A' - 10;
+	}
+	else
+	{
+		CharCaseVal = 'a' - 10;
+	}
+	if( nBase <= 1 || nBase > 64 )
+	{
+		return 0;
+	}
+	// 计算转换整数的指数系数
+	GetValInf(m_Data , signbit , exp , base);
+	iExp = 262143 + 237 - (SF32_BaseTypeS)exp;
+	if( exp == 0 )
+	{
+		iExp += (SF32_BaseTypeS)SoftFloat32_CountLeadingZeros<256>(base) - (1+19);
+	}
+	if( abs(iExp) >= 262143 )
+	{
+		iNum = iExp / 32; // 防止系数溢出为 INF
+	}
+	else
+	{
+		iNum = 0;
+	}
+	iExp = (SF32_BaseTypeS)((double)iExp * 0.6931471805599453 / log((double)nBase)); // / log2((double)nBase) // log[base](2) == 1/log2(base) == ln(2)/ln(base)
+	// 乘以系数取整数
+	TmpVal = nBase;
+	TmpVal.PowInt(iExp - iNum);
+	TmpVal *= *this;
+	if( iNum != 0 )
+	{
+		CSoftFloat256 TmpVal2;
+		TmpVal2 = nBase;
+		TmpVal2.PowInt(iNum);
+		TmpVal *= TmpVal2;
+	}
+	GetValInf(TmpVal.m_Data, signbit, exp, base);
+	iNum = (SF32_BaseTypeS)exp - 262143 - 236;
+	base[7] |= 0x00001000;
+	if( iNum > 0 )
+	{
+		SoftFloat32_UIntLSL<256>(base , (unsigned int)(iNum));
+	}
+	else if( iNum < 0 )
+	{
+		SoftFloat32_UIntLSR<256>(base , (unsigned int)(-iNum));
+	}
+	// 生成整数文本
+	iBaseCnt = 0;
+	while( !SoftFloat32_IsZero<256>(base) )
+	{
+		CharVal = (char)SoftFloat32_UIntDivVal<256>(base , nBase);
+		if( iBaseCnt < nBaseSize )
+		{
+			if( CharVal < 10 )
+			{
+				CharVal += '0';
+			}
+			else if( CharVal < 16 )
+			{
+				CharVal += CharCaseVal;
+			}
+			else if( CharVal < (10+26) )
+			{
+				CharVal += 'A' - 10;
+			}
+			else if( CharVal < (10+26+26) )
+			{
+				CharVal += 'a' - (10+26);
+			}
+			else
+			{
+				if( CharVal == 62 )
+				{
+					CharVal = '#';
+				}
+				else if( CharVal == 63 )
+				{
+					CharVal = '$';
+				}
+				else
+				{
+					CharVal = '~';
+				}
+			}
+			strReBase[iBaseCnt] = CharVal;
+		}
+		iBaseCnt++;
+	}	iReExp = -iExp;
+	return iBaseCnt;
+}
+SF32_BaseTypeS CSoftFloat256::ToStr(char* pReStr , SF32_BaseTypeS nSize , SF32_BaseTypeS nBase) const
+{
+	SF32_BaseTypeS iBaseCnt;
+	SF32_BaseTypeS iExpCnt;
+	SF32_BaseTypeS iExp;
+	SF32_BaseTypeS iNum;
 	char strBuf[256];
+	char strExp[64];
+	// 排除特殊情况
 	if( nSize <= 0 )
 	{
 		return 0;
@@ -1298,106 +1413,23 @@ SF32_BaseTypeS CSoftFloat256::ToStr(char* pReStr, SF32_BaseTypeS nSize, SF32_Bas
 			return 2;
 		}
 	}
-	if( nBase < 0 )
-	{
-		nBase = -nBase;
-		CharCaseVal = 'A' - 10;
-	}
-	else
-	{
-		CharCaseVal = 'a' - 10;
-	}
-	if (nBase <= 1 || nBase > 64)
+	// 获取文本信息
+	iBaseCnt = GetStrInf(nBase , strBuf , sizeof(strBuf) , iExp);
+	if( iBaseCnt <= 0 )
 	{
 		return 0;
 	}
-	GetValInf(m_Data, signbit, exp, base);
-	iExp = 262143 + 237 - (SF32_BaseTypeS)exp;
-	if( exp == 0 )
-	{
-		iExp += (SF32_BaseTypeS)SoftFloat32_CountLeadingZeros<256>(base) - (1+19);
-	}
-	if( abs(iExp) >= 262143 )
-	{
-		iNum = iExp / 32;
-	}
-	else
-	{
-		iNum = 0;
-	}
-	iExp = (SF32_BaseTypeS)((double)iExp * 0.6931471805599453 / log((double)nBase)); // / log2((double)nBase) // log[base](2) == 1/log2(base) == ln(2)/ln(base)
-	TmpVal = nBase;
-	TmpVal.PowInt(iExp - iNum);
-	TmpVal *= *this;
-	if( iNum != 0 )
-	{
-		CSoftFloat256 TmpVal2;
-		TmpVal2 = nBase;
-		TmpVal2.PowInt(iNum);
-		TmpVal *= TmpVal2;
-	}
-	GetValInf(TmpVal.m_Data, signbit, exp, base);
-	iNum = (SF32_BaseTypeS)exp - 262143 - 236;
-	base[7] |= 0x00001000;
-	if( iNum > 0 )
-	{
-		SoftFloat32_UIntLSL<256>(base , (unsigned int)(iNum));
-	}
-	else if( iNum < 0 )
-	{
-		SoftFloat32_UIntLSR<256>(base , (unsigned int)(-iNum));
-	}
-	for( iBaseCnt = 0 ; iBaseCnt < sizeof(strBuf) ; iBaseCnt++ )
-	{
-		if( SoftFloat32_IsZero<256>(base) )
-		{
-			break;
-		}
-		CharVal = (char)SoftFloat32_UIntDivVal<256>(base , nBase);
-		if( CharVal < 10 )
-		{
-			CharVal += '0';
-		}
-		else if( CharVal < 16 )
-		{
-			CharVal += CharCaseVal;
-		}
-		else if( CharVal < (10+26) )
-		{
-			CharVal += 'A' - 10;
-		}
-		else if( CharVal < (10+26+26) )
-		{
-			CharVal += 'a' - (10+26);
-		}
-		else
-		{
-			if( CharVal == 62 )
-			{
-				CharVal = '#';
-			}
-			else if( CharVal == 63 )
-			{
-				CharVal = '$';
-			}
-			else
-			{
-				CharVal = '~';
-			}
-		}
-		strBuf[iBaseCnt] = CharVal;
-	}
-	iNum = iExp = iBaseCnt - iExp;
-	// 生成指数值
+	iNum = iExp = iBaseCnt + iExp;
+	// 生成指数文本
 	if( iNum < 0 ) { iNum = -iNum; }
-	for( iExpCnt = 0 ; iExpCnt < sizeof(base) && iNum != 0 ; iExpCnt++ )
+	for( iExpCnt = 0 ; iExpCnt < sizeof(strExp) && iNum != 0 ; iExpCnt++ )
 	{
-		((char*)base)[sizeof(base)-iExpCnt-1] = (char)(iNum%10) + '0';
+		strExp[sizeof(strExp)-iExpCnt-1] = (char)(iNum%10) + '0';
 		iNum /= 10;
 	}
 	// 计算最小长度
 	iNum = 2; // 0.
-	if( signbit != 0 )
+	if( IsNeg() )
 	{
 		iNum++;
 	}
@@ -1414,9 +1446,9 @@ SF32_BaseTypeS CSoftFloat256::ToStr(char* pReStr, SF32_BaseTypeS nSize, SF32_Bas
 	{
 		return 0;
 	}
-	// 输出数据
+	// 合并输出文本
 	iNum = 0;
-	if( signbit != 0 )
+	if( IsNeg() )
 	{
 		pReStr[iNum++] = '-';
 	}
@@ -1428,11 +1460,15 @@ SF32_BaseTypeS CSoftFloat256::ToStr(char* pReStr, SF32_BaseTypeS nSize, SF32_Bas
 	}
 	if( iExp != 0 )
 	{
+		if( nBase < 0 )
+		{
+			nBase = -nBase;
+		}
 		if( nBase <= 10 )
 		{
 			pReStr[iNum++] = 'e';
 		}
-		else if( nBase <= 19 )
+		else if( nBase <= 16 )
 		{
 			pReStr[iNum++] = 'p';
 		}
@@ -1444,10 +1480,18 @@ SF32_BaseTypeS CSoftFloat256::ToStr(char* pReStr, SF32_BaseTypeS nSize, SF32_Bas
 		{
 			pReStr[iNum++] = '-';
 		}
-		memcpy(&pReStr[iNum] , &((char*)base)[sizeof(base)-iExpCnt] , iExpCnt);
+		memcpy(&pReStr[iNum] , &strExp[sizeof(strExp)-iExpCnt] , iExpCnt);
 		iNum += iExpCnt;
 	}
 	return iNum;
+}
+const SF32_BaseTypeU* CSoftFloat256::GetRawData()
+{
+	return m_Data;
+}
+void CSoftFloat256::SetRawData(const SF32_BaseTypeU Data[8])
+{
+	memcpy(m_Data , Data , sizeof(m_Data));
 }
 	
 void CSoftFloat256::Add(SF32_BaseTypeU Data1_Sum[8] , const SF32_BaseTypeU Data2[8])
@@ -2255,6 +2299,14 @@ CSoftFloat256& CSoftFloat256::operator = (const SF32_UInt32_T v)
 CSoftFloat256& CSoftFloat256::operator = (const SF32_UInt64_T v)
 {
 	FromInt64(m_Data , v , 0);
+	return *this;
+}
+CSoftFloat256& CSoftFloat256::operator = (const char* pStr)
+{
+	if( FormStr(pStr) < 0 )
+	{
+		SetNAN();
+	}
 	return *this;
 }
 bool CSoftFloat256::operator == (const CSoftFloat256& b)

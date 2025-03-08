@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 // #include <tchar.h>
 #include <iostream>
@@ -141,43 +140,43 @@ int main()
 	std::cout << "data operation test(dbl) end" << std::endl;
 
 	// operation 
-	v1 = CSoftFloat256(ConstVal_Min);
+	v1 = CSoftFloat256((const SF32_BaseTypeU*)ConstVal_Min);
 	v2 = 3.0;
 	v1 *= v2;
-	v2 = CSoftFloat256("\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
+	v2 = CSoftFloat256((const SF32_BaseTypeU*)"\x03\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
 	SoftFloat32_Check_B(v1 != v2 , 0 + 3000);
 
-	v1 = CSoftFloat256(ConstVal_Min);
-	v2 = CSoftFloat256(ConstVal_Max);
+	v1 = CSoftFloat256((const SF32_BaseTypeU*)ConstVal_Min);
+	v2 = CSoftFloat256((const SF32_BaseTypeU*)ConstVal_Max);
 	v1 *= v2;
 	SoftFloat32_Check_DE(v1 , pow(2.0 ,-234.0) , 1 + 3000);
 
-	v1 = CSoftFloat256(ConstVal_Min);
-	v2 = CSoftFloat256(ConstVal_Max);
+	v1 = CSoftFloat256((const SF32_BaseTypeU*)ConstVal_Min);
+	v2 = CSoftFloat256((const SF32_BaseTypeU*)ConstVal_Max);
 	v1 /= v1;
 	v2 /= v2;
 	SoftFloat32_Check_B(v1 != v2 , 2 + 3000);
 	SoftFloat32_Check_DE(v1 , 1.0 , 3 + 3000);
 
-	v1 = CSoftFloat256(ConstVal_Min);
-	v2 = CSoftFloat256("\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00");
+	v1 = CSoftFloat256((const SF32_BaseTypeU*)ConstVal_Min);
+	v2 = CSoftFloat256((const SF32_BaseTypeU*)"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00");
 	d1 = pow(2.0 ,236.0);
 	SoftFloat32_Check_B((v1*CSoftFloat256(d1)) != v2 , 4 + 3000);
 	SoftFloat32_Check_B((v2/CSoftFloat256(d1)) != v1 , 5 + 3000);
 	SoftFloat32_Check_B((v2/v1) != CSoftFloat256(d1) , 6 + 3000);
 
-	v1 = CSoftFloat256("\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
+	v1 = CSoftFloat256((const SF32_BaseTypeU*)"\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
 	v1 += v2;
-	SoftFloat32_Check_B(v1 != CSoftFloat256("\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00") , 7 + 3000);
+	SoftFloat32_Check_B(v1 != CSoftFloat256((const SF32_BaseTypeU*)"\x10\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x10\x00\x00") , 7 + 3000);
 
-	v1 = CSoftFloat256(ConstVal_Max);
+	v1 = CSoftFloat256((const SF32_BaseTypeU*)ConstVal_Max);
 	v2 = 7890123.4567;
 	v1 /= v2;
 	v1 *= v2;
 	((SF32_UInt32_T*)&v1)[0] |= 0x00000001; // 运算不支持进位功能
-	SoftFloat32_Check_B(v1 != CSoftFloat256(ConstVal_Max) , 8 + 3000);
+	SoftFloat32_Check_B(v1 != CSoftFloat256((const SF32_BaseTypeU*)ConstVal_Max) , 8 + 3000);
 	
-	v1 = CSoftFloat256("\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xBF");
+	v1 = CSoftFloat256((const SF32_BaseTypeU*)"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xBF");
 	v1 *= v1;
 	SoftFloat32_Check_DE(v1 , 4.0 , 9 + 3000);
 
@@ -205,7 +204,6 @@ int main()
 
 	std::cout << "data compare test end" << std::endl;
 
-	//std::cout << (double)v1 << std::endl;
-	system("pause");
+	std::cin.get();
 	return 0;
 }
