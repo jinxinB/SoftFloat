@@ -1,6 +1,6 @@
 # SoftFloat
 
-软件实现256位浮点数运算
+软件实现256位浮点数运算（使用IEEE 754格式存储）
 
 引入 SoftFloat32.cpp 和 SoftFloat32.h 文件即可按常规浮点数据的方式使用
 
@@ -20,19 +20,18 @@
 int main()
 {
 	int i;
-	CSoftFloat256 v , k , one;
+	CSoftFloat256 v , k;
 	char strBuf[256];
 	
 	// pi^2n = ((-1^(n-1) * (2n)!) / (2^(2n-1) * B2n)) * Σ(1/k^2n)[k:1-N]
-	one = 1;
-	v = one;
+	v = 1;
 	for( i = 2 ; i <= 16 ; i++ ) // 1/16^64 : 2^-256
 	{
 		k = i;
-		k.PowInt(64);
-		v += one / k;
+		k.PowInt(-64);
+		v += k;
 	}
-	k = one;
+	k = 1;
 	for( i = 2 ; i <= 64 ; i++ )
 	{
 		k *= i;

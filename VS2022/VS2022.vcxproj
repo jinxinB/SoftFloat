@@ -135,7 +135,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\SoftFloat32.cpp" />
-    <ClCompile Include="..\SoftFloat32TestWin.cpp" />
+    <ClCompile Include="..\test\SoftFloat32TestWin.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\SoftFloat32.h" />

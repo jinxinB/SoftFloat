@@ -118,6 +118,8 @@ public:
 	CSoftFloat256 operator * (const CSoftFloat256& b) const;
 	CSoftFloat256 operator / (const CSoftFloat256& b) const;
 	CSoftFloat256 operator % (const CSoftFloat256& b) const;
+	CSoftFloat256 operator - () const;
+	CSoftFloat256 operator + () const;
 	CSoftFloat256& operator = (const CSoftFloat256& b);
 	CSoftFloat256& operator = (const double v);
 	CSoftFloat256& operator = (const SF32_SInt32_T v);
@@ -125,12 +127,12 @@ public:
 	CSoftFloat256& operator = (const SF32_UInt32_T v);
 	CSoftFloat256& operator = (const SF32_UInt64_T v);
 	CSoftFloat256& operator = (const char* pStr);
-	bool operator == (const CSoftFloat256& b);
-	bool operator != (const CSoftFloat256& b);
-	bool operator >= (const CSoftFloat256& b);
-	bool operator <= (const CSoftFloat256& b);
-	bool operator > (const CSoftFloat256& b);
-	bool operator < (const CSoftFloat256& b);
+	bool operator == (const CSoftFloat256& b) const;
+	bool operator != (const CSoftFloat256& b) const;
+	bool operator >= (const CSoftFloat256& b) const;
+	bool operator <= (const CSoftFloat256& b) const;
+	bool operator > (const CSoftFloat256& b) const;
+	bool operator < (const CSoftFloat256& b) const;
 	operator double() const;
 	operator SF32_SInt32_T() const;
 	operator SF32_SInt64_T() const;

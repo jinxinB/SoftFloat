@@ -7,7 +7,7 @@
 #include <iostream>
 // #include <string.h>
 // #include <math.h>
-#include "SoftFloat32.h"
+#include "..\SoftFloat32.h"
 #include <gmp.h>
 
 const char* OpAdd(mpf_ptr s, mpf_srcptr a, mpf_srcptr b , CSoftFloat256& r , CSoftFloat256& v)

@@ -20,11 +20,15 @@ unsigned int SoftFloat32_CountLeadingZeros(const void* pDat)
 		}
 		nCnt += 32;
 	}
-	while( dat != 0 )
+	if( dat == 0 )
+	{
+		return nCnt - 32;
+	}
+	do
 	{
 		dat >>= 1;
 		nCnt--;
-	}
+	}while( dat != 0 );
 	return nCnt;
 }
 template<unsigned int nBitSize>
@@ -825,19 +829,26 @@ void CSoftFloat256::PowInt(SF32_BaseTypeS iExp)
 		*this /= y;
 		iExp = -iExp;
 	}
-	y = (SF32_UInt32_T)1;
+	// first bit
+	while( (iExp&0x00000001) == 0 ) // || iExp == 0 // exp != 0
+	{
+		iExp >>= 1;
+		(*this) *= (*this);
+	}
+	y = (*this);
+	// next bit
 	while(1)
 	{
-		if( (iExp&0x00000001) != 0 )
-		{
-			y *= (*this);
-		}
 		iExp >>= 1;
 		if( iExp == 0 )
 		{
 			break;
 		}
 		(*this) *= (*this);
+		if( (iExp&0x00000001) != 0 )
+		{
+			y *= (*this);
+		}
 	}
 	*this = y;
 }
@@ -2169,6 +2180,17 @@ CSoftFloat256 CSoftFloat256::operator % (const CSoftFloat256& b) const
 	v %= b;
 	return v;
 }
+CSoftFloat256 CSoftFloat256::operator + () const
+{
+	CSoftFloat256 v(*this);
+	return v;
+}
+CSoftFloat256 CSoftFloat256::operator - () const
+{
+	CSoftFloat256 v(*this);
+	v.Neg();
+	return v;
+}
 
 void CSoftFloat256::ToInt64(const SF32_BaseTypeU Data[8] , SF32_UInt64_T& uData , SF32_BaseTypeU& uSignBite)
 {
@@ -2197,11 +2219,7 @@ void CSoftFloat256::FromInt64(SF32_BaseTypeU Data[8] , const SF32_UInt64_T uData
 	n = SoftFloat32_CountLeadingZeros<64>(base);
 	if( n == 64 )
 	{
-		memset(Data , 0 , 8*sizeof(SF32_BaseTypeU)); // 0.0
-		if( uSignBite != 0 )
-		{
-			Data[7] = 0x80000000;
-		}
+		SetZero_S(Data , uSignBite);
 		return;
 	}
 	base[2] = 0; // 剩余高位会被移出
@@ -2236,8 +2254,7 @@ CSoftFloat256& CSoftFloat256::operator = (const double v)
 	{
 		if( base[0] == 0 && base[1] == 0 )
 		{
-			memset(m_Data , 0 , 7*sizeof(SF32_BaseTypeU));
-			m_Data[7] = signbit;
+			SetZero_S(m_Data , signbit);
 		}
 		else
 		{
@@ -2309,29 +2326,29 @@ CSoftFloat256& CSoftFloat256::operator = (const char* pStr)
 	}
 	return *this;
 }
-bool CSoftFloat256::operator == (const CSoftFloat256& b)
+bool CSoftFloat256::operator == (const CSoftFloat256& b) const
 {
 	//return memcmp(m_Data , b.m_Data , sizeof(m_Data)) == 0;
 	return ThreeWayComp(m_Data , b.m_Data) == 0;
 }
-bool CSoftFloat256::operator != (const CSoftFloat256& b)
+bool CSoftFloat256::operator != (const CSoftFloat256& b) const
 {
 	//return !(*this == b);
 	return ThreeWayComp(m_Data , b.m_Data) != 0;
 }
-bool CSoftFloat256::operator >= (const CSoftFloat256& b)
+bool CSoftFloat256::operator >= (const CSoftFloat256& b) const
 {
 	return ThreeWayComp(m_Data , b.m_Data) >= 0;
 }
-bool CSoftFloat256::operator <= (const CSoftFloat256& b)
+bool CSoftFloat256::operator <= (const CSoftFloat256& b) const
 {
 	return ThreeWayComp(m_Data , b.m_Data) <= 0;
 }
-bool CSoftFloat256::operator > (const CSoftFloat256& b)
+bool CSoftFloat256::operator > (const CSoftFloat256& b) const
 {
 	return ThreeWayComp(m_Data , b.m_Data) > 0;
 }
-bool CSoftFloat256::operator < (const CSoftFloat256& b)
+bool CSoftFloat256::operator < (const CSoftFloat256& b) const
 {
 	return ThreeWayComp(m_Data , b.m_Data) < 0;
 }

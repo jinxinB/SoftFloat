@@ -15,10 +15,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\SoftFloat32TestWin.cpp">
+    <ClCompile Include="..\SoftFloat32.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="..\SoftFloat32.cpp">
+    <ClCompile Include="..\test\SoftFloat32TestWin.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
