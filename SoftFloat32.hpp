@@ -162,11 +162,12 @@ inline CSoftFloat256& operator %= (CSoftFloat256& v1 , const double v2)
 	v1 %= vt;
 	return v1;
 }
-inline double operator %= (double& v1 , const CSoftFloat256& v2)
+inline double& operator %= (double& v1 , const CSoftFloat256& v2)
 {
 	CSoftFloat256 vt(v1);
-	vt %= (double)v2;
-	return (double)vt;
+	vt %= v2;
+	v1 = (double)vt;
+	return v1;
 }
 
 inline CSoftFloat256 operator + (const CSoftFloat256 v1 , const double v2)
@@ -247,14 +248,18 @@ inline CSoftFloat256& operator -- (CSoftFloat256& a)
 inline CSoftFloat256 operator ++ (CSoftFloat256& a , int)
 {
 	CSoftFloat256 t((SF32_UInt32_T)1);
+	CSoftFloat256 old;
+	old = a;
 	a += t;
-	return a;
+	return old;
 }
 inline CSoftFloat256 operator -- (CSoftFloat256& a , int)
 {
 	CSoftFloat256 t((SF32_UInt32_T)1);
+	CSoftFloat256 old;
+	old = a;
 	a -= t;
-	return a;
+	return old;
 }
 
 // Floating point comparison

@@ -97,8 +97,8 @@ protected:
 	static void GetValInf_S(const SF32_BaseTypeU Data[8] , SF32_BaseTypeU& uSignBit , SF32_BaseTypeU& exp , SF32_BaseTypeU base[8]);
 	static void SetValInf_S(SF32_BaseTypeU Data[8] , const SF32_BaseTypeU uSignBit , const SF32_BaseTypeU exp , const SF32_BaseTypeU base[8]);
 
-	void ToInt64(SF32_UInt64_T& uData , SF32_BaseTypeU& uSignBite) const;
-	void FromInt64(const SF32_UInt64_T uData , const SF32_BaseTypeU uSignBite);
+	void ToInt64(SF32_UInt64_T& uData , SF32_BaseTypeU& uSignBit) const;
+	void FromInt64(const SF32_UInt64_T uData , const SF32_BaseTypeU uSignBit);
 	void AddSub(const CSoftFloat256& b , SF32_BaseTypeU uSubSignbit);
 
 public:

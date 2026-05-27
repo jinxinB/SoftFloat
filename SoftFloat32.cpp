@@ -2774,38 +2774,38 @@ signed int CSoftFloat256::Compare(const CSoftFloat256& b) const
 }
 bool CSoftFloat256::operator == (const CSoftFloat256& b) const
 {
-	return Compare(b.m_Data) == E_SoftFloat_Ord_Equivalent;
+	return Compare(b) == E_SoftFloat_Ord_Equivalent;
 }
 bool CSoftFloat256::operator != (const CSoftFloat256& b) const
 {
 	// return !(*this == b);
-	return Compare(b.m_Data) != E_SoftFloat_Ord_Equivalent;
+	return Compare(b) != E_SoftFloat_Ord_Equivalent;
 }
 bool CSoftFloat256::operator >= (const CSoftFloat256& b) const
 {
-	// signed int iCmp = Compare(b.m_Data);
+	// signed int iCmp = Compare(b);
 	// return iCmp == E_SoftFloat_Ord_Greater || iCmp == E_SoftFloat_Ord_Equivalent;
-	return Compare(b.m_Data) >= E_SoftFloat_Ord_Equivalent; // E_SoftFloat_Ord_Unordered < E_SoftFloat_Ord_Equivalent
+	return Compare(b) >= E_SoftFloat_Ord_Equivalent; // E_SoftFloat_Ord_Unordered < E_SoftFloat_Ord_Equivalent
 }
 bool CSoftFloat256::operator <= (const CSoftFloat256& b) const
 {
-	signed int iCmp = Compare(b.m_Data);
+	signed int iCmp = Compare(b);
 	return iCmp == E_SoftFloat_Ord_Less || iCmp == E_SoftFloat_Ord_Equivalent;
 }
 bool CSoftFloat256::operator > (const CSoftFloat256& b) const
 {
-	return Compare(b.m_Data) == E_SoftFloat_Ord_Greater;
+	return Compare(b) == E_SoftFloat_Ord_Greater;
 }
 bool CSoftFloat256::operator < (const CSoftFloat256& b) const
 {
-	return Compare(b.m_Data) == E_SoftFloat_Ord_Less;
+	return Compare(b) == E_SoftFloat_Ord_Less;
 }
 
-void CSoftFloat256::ToInt64(SF32_UInt64_T& uData , SF32_BaseTypeU& uSignBite) const
+void CSoftFloat256::ToInt64(SF32_UInt64_T& uData , SF32_BaseTypeU& uSignBit) const
 {
 	SF32_BaseTypeU base[8];
 	SF32_BaseTypeU exp;
-	GetValInf_S(m_Data , uSignBite , exp , base);
+	GetValInf_S(m_Data , uSignBit , exp , base);
 	if( exp >= (F256_EXP_BIAS+64) )
 	{
 		uData = UINT64_C(0xFFFFFFFFFFFFFFFF);
@@ -2820,7 +2820,7 @@ void CSoftFloat256::ToInt64(SF32_UInt64_T& uData , SF32_BaseTypeU& uSignBite) co
 	SoftFloat32_UIntLSR(base , (F256_EXP_BIAS+F256_SIGNIFICAND_BITS)-exp , F256_BITS); // F256_SIGNIFICAND_BITS - (exp-F256_EXP_BIAS)
 	uData = *(SF32_UInt64_T*)base;
 }
-void CSoftFloat256::FromInt64(const SF32_UInt64_T uData , const SF32_BaseTypeU uSignBite)
+void CSoftFloat256::FromInt64(const SF32_UInt64_T uData , const SF32_BaseTypeU uSignBit)
 {
 	SF32_BaseTypeU n;
 	SF32_BaseTypeU base[8];
@@ -2828,12 +2828,12 @@ void CSoftFloat256::FromInt64(const SF32_UInt64_T uData , const SF32_BaseTypeU u
 	n = SoftFloat32_CountLeadingZeros(base , 64);
 	if( n == 64 )
 	{
-		SetZero(uSignBite);
+		SetZero(uSignBit);
 		return;
 	}
 	base[2] = 0; // remaining higher words will be shifted out
 	SoftFloat32_UIntLSL(base , (F256_SIGNIFICAND_BITS-63)+n , F256_BITS); // F256_SIGNIFICAND_BITS + (n-63)
-	SetValInf_S(m_Data , uSignBite , (F256_EXP_BIAS+63)-n , base); // F256_EXP_BIAS + (63-n)
+	SetValInf_S(m_Data , uSignBit , (F256_EXP_BIAS+63)-n , base); // F256_EXP_BIAS + (63-n)
 }
 
 CSoftFloat256& CSoftFloat256::operator = (const CSoftFloat256& b)
