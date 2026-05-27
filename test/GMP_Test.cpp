@@ -1,14 +1,14 @@
 
+// QueryPerformanceFrequency
 #include <Windows.h>
 #include <profileapi.h>
 
-// #include <stdio.h>
-// #include <tchar.h>
 #include <iostream>
-// #include <string.h>
-// #include <math.h>
 #include "..\SoftFloat32.h"
+
+#pragma warning( disable : 4244 4146 )
 #include <gmp.h>
+#pragma warning( default : 4244 4146 )
 
 const char* OpAdd(mpf_ptr s, mpf_srcptr a, mpf_srcptr b , CSoftFloat256& r , CSoftFloat256& v)
 {
@@ -172,20 +172,26 @@ void TestPerformance()
 	v1.FormStr("3.1415926535897932384626433832795", -1, 10);
 	v2.FormStr("2.7182818284590452353602874713527", -1, 10);
 
+	Sleep(0);
 	QueryPerformanceCounter(&tc1);
 	for (i = 0; i < 100; i++)
 	{
+		mpf_add(s, s, a);
 		mpf_mul(s, s, a);
+		mpf_sub(s, s, b);
 		mpf_div(s, s, b);
 	}
 	QueryPerformanceCounter(&tc2);
 	mpf_dump(s);
 	TestPerformance_OptTime("GMP mul div:" , tc1 , tc2);
 
+	Sleep(0);
 	QueryPerformanceCounter(&tc1);
 	for (i = 0; i < 100; i++)
 	{
+		s2 += v1;
 		s2 *= v1;
+		s2 -= v2;
 		s2 /= v2;
 	}
 	QueryPerformanceCounter(&tc2);
@@ -194,6 +200,7 @@ void TestPerformance()
 	TestPerformance_OptTime("Soft32 mul div:", tc1, tc2);
 
 	mpf_set(s, a);
+	Sleep(0);
 	QueryPerformanceCounter(&tc1);
 	for (i = 0; i < 100; i++)
 	{
@@ -204,6 +211,7 @@ void TestPerformance()
 	TestPerformance_OptTime("GMP sqrt:", tc1, tc2);
 
 	s2 = v1;
+	Sleep(0);
 	QueryPerformanceCounter(&tc1);
 	for (i = 0; i < 100; i++)
 	{
@@ -248,27 +256,36 @@ void OutptuBase2_ExpText(signed long int exp)
 	mpf_clear(v);
 }
 
-void SoftFloat32_Check_B(bool b, unsigned int idx)
+void OutptuBaseTextTest(const char* pStr)
 {
-	if (b)
+	int nBase;
+	mpf_t v;
+	mp_exp_t exp;
+	CSoftFloat256 v1;
+	char strBuf[512];
+	mpf_init(v);
+	mpf_set_prec(v, 256);
+	mpf_set_str(v, pStr, 10);
+	v1 = pStr;
+	for( nBase = 2 ; nBase <= 62 ; nBase++ )
 	{
-		std::cout << "CheckErrorIdx:" << idx << std::endl;
+		printf("%02d : " , nBase);
+		mpf_get_str(strBuf, &exp, nBase, sizeof(strBuf) - 1, v);
+		std::cout << "0." << strBuf << "e" << exp << std::endl;
+		
+		printf("%02d : " , nBase);
+		strBuf[v1.ToStr(strBuf , sizeof(strBuf)-1 , nBase)] = 0;
+		std::cout << strBuf << std::endl;
 	}
+	mpf_clear(v);
 }
-void SoftFloat32_Check_E(double v1, double v2, unsigned int idx)
-{
-	SoftFloat32_Check_B(v1 != v2, idx);
-}
-void SoftFloat32_Check_DE(double v1, double v2, unsigned int idx)
-{
-	SoftFloat32_Check_B(abs(v1 - v2) > abs(v1 * 4.4408920985006262e-016), idx); // 1/(2^51)
-}
-int main()
+
+void GMP_Test()
 {
 	CSoftFloat256 v1 , v2;
-	double d1 ;
 	char strBuf[256];
 
+	// Comparison with GMP calculation
 	TestOp2("4.9406564584124654e-324" , "1.7976931348623157e+308" , OpMul);
 	TestOp2("3.1415926535897932384626433832795", "2.7182818284590452353602874713527", OpMul);
 	TestOp2("3.1415926535897932384626433832795", "2.7182818284590452353602874713527", OpDiv);
@@ -279,15 +296,17 @@ int main()
 	TestOp2i("3.1415926535897932384626433832795", -888, OpScalBN);
 	std::cout << "OP test end\r\n\r\n";
 
+	// Comparison with GMP code execution time
 	TestPerformance();
 	std::cout << "Performance test end\r\n\r\n";
 
+	// Index operation test
 	std::cout << "2 ^ -262154 : " << std::endl;
 	v1.SetBN(-262154); // -0x0003FFFF - 11
 	strBuf[v1.ToStr(strBuf, sizeof(strBuf) - 1)] = 0;
 	std::cout << strBuf << std::endl;
 	OutptuBase2_ExpText(-262154);
-	//v2 = 2;
+	//v2 = 1;
 	//v2.ScalBN(2154);
 	v2.SetBN(2154);
 	strBuf[v2.ToStr(strBuf, sizeof(strBuf) - 1)] = 0;
@@ -304,86 +323,43 @@ int main()
 	OutptuBase2_ExpText(-260000);
 	std::cout << "SetBN test end\r\n\r\n";
 
-
-	v1.SetNAN();
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
-	std::cout << strBuf << std::endl;
-
-	v1.FormStr("0");
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
-	std::cout << strBuf << std::endl;
-
-	std::cout << "2 ^ -262167 : " << std::endl;
-	v1.FormStr("1e-262167", -1, 2);
-	v2.SetBN(-262167);
-	strBuf[v1.ToStr(strBuf, 32, 2)] = 0;
-	std::cout << "0b" << strBuf << std::endl;
-	strBuf[v2.ToStr(strBuf, 32, 2)] = 0;
-	std::cout << "0b" << strBuf << std::endl;
-
+	// Text conversion verification
 	v1.FormStr("0.6349923815708424697089005265198e303");
 	strBuf[v1.ToStr(strBuf, 32, 10)] = 0;
 	std::cout << strBuf << std::endl;
-
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf) - 1, 2)] = 0;
+	
+	strBuf[v1.ToStr(strBuf, sizeof(strBuf)-1, 2)] = 0;
 	std::cout << strBuf << std::endl;
 	OutptuBase2Text("0.6349923815708424697089005265198e303");
 
-	v1.FormStr("0.6349923815708424697089005265198e303");
-	d1 = v1;
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
-	std::cout << strBuf << std::endl;
-	v1.FormStr("0.6349923815708424697089005265198e003");
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
-	std::cout << strBuf << std::endl;
-	v1.FormStr("0.6349923815708424697089005265198e-303");
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
-	std::cout << strBuf << std::endl;
-	v1.FormStr("0.6349923815708424697089005265198e103");
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
-	std::cout << strBuf << std::endl;
-	v1.FormStr("0.6349923815708424697089005265198e-3");
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
-	std::cout << strBuf << std::endl;
-	v1.FormStr("0.6349923815708424697089005265198e66");
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 10)] = 0;
-	std::cout << strBuf << std::endl;
-	v1.FormStr("0.6349923815708424697089005265198p33" , -1 , 12);
-	d1 = v1;
-	strBuf[v1.ToStr(strBuf, sizeof(strBuf), 12)] = 0;
-	std::cout << strBuf << std::endl;
+	std::cout << std::endl;
+
+	// epsilon : 2^-236
+	v1.SetEpsilon();
+	strBuf[v1.ToStr(strBuf , sizeof(strBuf) - 1)] = 0;
+	std::cout << "epsilon : " << strBuf << std::endl;
+	OutptuBase2_ExpText(-236);
+
+	// min : 2^-262142
+	v1.SetMin(); // == 4
+	strBuf[v1.ToStr(strBuf , sizeof(strBuf) - 1)] = 0;
+	std::cout << "min : " << strBuf << std::endl;
+	OutptuBase2_ExpText(-262142);
+
+	// denorm min : 2^-262378
+	v1.SetDenormMin();
+	strBuf[v1.ToStr(strBuf , sizeof(strBuf) - 1)] = 0;
+	std::cout << "denorm min : " << strBuf << std::endl;
+	OutptuBase2_ExpText(-262378);
+
+	// max : ≈ 2^262144
+	v1.SetMax();
+	strBuf[v1.ToStr(strBuf , sizeof(strBuf) - 1)] = 0;
+	std::cout << "max : " << strBuf << std::endl;
+	OutptuBase2_ExpText(262144);
+	
+	std::cout << std::endl << "base test : " << std::endl;
+	OutptuBaseTextTest("3.1415926535897932384626433832795028841971693993751058209749445923078164062862");
+	
 	std::cout << "ToStr test end\r\n\r\n";
-
-	//v1.FormStr("1.2951585059776189e-318"); // 无四舍五入，最小值差一
-	//SoftFloat32_Check_DE(1.2951585059776189e-318, v1, 1);
-	v1.FormStr("1.2951585059776189e-308");
-	SoftFloat32_Check_DE(1.2951585059776189e-308, v1, 1);
-	
-	v1.FormStr("12345");
-	SoftFloat32_Check_DE(12345, v1, 2);
-	
-	v1.FormStr("1.6349923815708424697089005265198e273");
-	SoftFloat32_Check_DE(1.6349923815708424697089005265198e273, v1, 3);
-
-	v1.FormStr("0x1.6349923815708424p12"); // base(16)^exp
-	SoftFloat32_Check_DE(0x1.6349923815708424p48, v1, 4); // 2^exp
-
-	std::cout << "FormStr test end\r\n\r\n";
-	
-	
-	v1 = 0.256;
-	v1.PowInt(123);
-	//SoftFloat32_Check_DE(1.6349923815708424697089005265198e-73, v1, 1);
-	SoftFloat32_Check_DE(pow(0.256, 123), v1, 1);
-
-	v1 = 0.256;
-	v1.PowInt(-123);
-	//SoftFloat32_Check_DE(6.116236450222695245349450840302e+72 , v1, 2);
-	SoftFloat32_Check_DE(pow(0.256, -123), v1, 2);
-
-	std::cout << "PowInt test end\r\n\r\n";
-	
-	//std::cout << (double)v1 << std::endl;
-	system("pause");
-	return 0;
 }
